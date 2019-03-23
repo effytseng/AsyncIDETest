@@ -18,6 +18,7 @@ import progress from 'nprogress'
 import api from '@/utils/github-api'
 import req from 'reqjs'
 import Event from '@/utils/event'
+import { socket } from '../index';
 
 Vue.use(Vuex)
 
@@ -31,15 +32,18 @@ const sortPans = ps => {
 const emptyPans = () => ({
   js: {
     code: '',
-    transformer: 'js'
+    transformer: 'js',
+    position:  {line: 0, ch: 0, sticky: null}
   },
   css: {
     code: '',
-    transformer: 'css'
+    transformer: 'css',
+    position:  {line: 0, ch: 0, sticky: null}
   },
   html: {
     code: '',
-    transformer: 'html'
+    transformer: 'html',
+    position:  {line: 0, ch: 0, sticky: null}
   }
 })
 
@@ -76,12 +80,16 @@ const store = new Vuex.Store({
     userMeta: JSON.parse(localStorage.getItem('codepan:user-meta')) || {},
     editorStatus: 'saved',
     iframeStatus: null,
-    transforming: false
+    transforming: false,
+    socketId: null,
+    sender: null
   },
   mutations: {
-    UPDATE_CODE(state, { type, code }) {
+    UPDATE_CODE(state, { type, code, position }) {
       console.log(`type:${type}`)
-      state[type].code = code
+      state[type].code = code;
+      state[type].position = position
+      // should do socket call here
     },
     UPDATE_TRANSFORMER(state, { type, transformer }) {
       state[type].transformer = transformer
@@ -128,11 +136,23 @@ const store = new Vuex.Store({
     },
     SET_TRANSFORM(state, status) {
       state.transforming = status
+    },
+    SET_SOCKETID(state, id) {
+      state.socketId = id
+    },
+    SET_SENDER(state, id) {
+      state.sender = id;
     }
   },
   actions: {
     async updateCode({ commit }, payload) {
       await commit('UPDATE_CODE', payload)
+    },
+    setSocketId({commit}, payload) {
+      commit('SET_SOCKETID', payload)
+    },
+    setSenderId({commit}, payload) {
+      commit('SET_SENDER', payload);
     },
     updateError({ commit }, payload) {
       commit('UPDATE_ERROR', payload)
